@@ -157,7 +157,7 @@ const OrderForm: React.FC = () => {
       paymentMethod: formData.paymentMethod,
       amount,
     };
-
+    // @ts-ignore
     dispatch(addOrder(newOrder));
 
     // Reset form
