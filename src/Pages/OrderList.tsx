@@ -1,3 +1,5 @@
+"use client";
+
 import type React from "react";
 import { useState } from "react";
 import { useAppSelector } from "../hooks/useAppSelector";
@@ -35,10 +37,17 @@ import {
 } from "@/components/ui/popover";
 import { Ellipsis, Edit, Trash, Save } from "lucide-react";
 import PDFDownloadButton from "./PDFDownloadButton";
+import BulkPrintOrders from "./Print/bulk-print-orders";
+import PrintOrder from "./Print/print-order";
+import { selectCompany, selectIsRegistered } from "@/store/companySilice";
+import { useSelector } from "react-redux";
 
 const OrderList: React.FC = () => {
   const dispatch = useAppDispatch();
   const orders = useAppSelector(selectOrders);
+  const company = useAppSelector(selectCompany);
+ 
+
   const totalAmount = useAppSelector(selectTotalAmount);
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
   const [formData, setFormData] = useState<Order | null>(null);
@@ -135,9 +144,20 @@ const OrderList: React.FC = () => {
   return (
     <Card>
       <CardHeader>
-        <div className="flex justify-between">
+        <div className="flex justify-between items-center">
           <CardTitle className="text-xl">Order List</CardTitle>
-          <PDFDownloadButton orders={orders} totalAmount={totalAmount} />
+          <div className="flex items-center gap-2">
+            {orders.length > 0 && (
+              <BulkPrintOrders
+                orders={orders}
+                //@ts-ignore
+                company={company}
+                sortBy="id"
+                sortDirection="desc"
+              />
+            )}
+            <PDFDownloadButton orders={orders} totalAmount={totalAmount} />
+          </div>
         </div>
         <span className="text-sm text-muted-foreground">
           Orders {orders.length}
@@ -330,6 +350,11 @@ const OrderList: React.FC = () => {
                                         <Trash className="mr-2 h-4 w-4" />
                                         Delete
                                       </Button>
+                                      <PrintOrder
+                                        order={order}
+                                        //@ts-ignore
+                                        company={company}
+                                      />
                                     </div>
                                   </PopoverContent>
                                 </Popover>

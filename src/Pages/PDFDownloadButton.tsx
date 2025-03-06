@@ -23,9 +23,9 @@ const PDFDownloadButton: React.FC<PDFDownloadButtonProps> = ({
       fileName={`orders-${new Date().toISOString().split("T")[0]}.pdf`}
     >
       {({ loading }) => (
-        <Button variant="outline" disabled={loading}>
+        <Button variant="outline" size="sm" disabled={loading}>
           <FileDown className="mr-2 h-4 w-4" />
-          {loading ? "Generating PDF..." : "Download PDF"}
+          {loading ? "Generating PDF..." : "PDF"}
         </Button>
       )}
     </PDFDownloadLink>
