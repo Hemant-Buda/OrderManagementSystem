@@ -5,7 +5,7 @@ import type React from "react";
 import { useRef, useState } from "react";
 import { useReactToPrint } from "react-to-print";
 import { QRCodeSVG } from "qrcode.react";
-import { Printer, Eye, CloudHail } from "lucide-react";
+import { Printer, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
 import {

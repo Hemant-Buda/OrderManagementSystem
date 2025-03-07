@@ -39,14 +39,12 @@ import { Ellipsis, Edit, Trash, Save } from "lucide-react";
 import PDFDownloadButton from "./PDFDownloadButton";
 import BulkPrintOrders from "./Print/bulk-print-orders";
 import PrintOrder from "./Print/print-order";
-import { selectCompany, selectIsRegistered } from "@/store/companySilice";
-import { useSelector } from "react-redux";
+import { selectCompany } from "@/store/companySilice";
 
 const OrderList: React.FC = () => {
   const dispatch = useAppDispatch();
   const orders = useAppSelector(selectOrders);
   const company = useAppSelector(selectCompany);
- 
 
   const totalAmount = useAppSelector(selectTotalAmount);
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
