@@ -43,6 +43,7 @@ import { selectCompany } from "@/store/companySilice";
 const OrderList: React.FC = () => {
   const dispatch = useAppDispatch();
   const orders = useAppSelector(selectOrders);
+  console.log(orders, "list");
   const company = useAppSelector(selectCompany);
 
   const totalAmount = useAppSelector(selectTotalAmount);

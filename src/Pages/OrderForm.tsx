@@ -13,9 +13,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/lable";
+import { useAppSelector } from "@/hooks/useAppSelector";
+import { selectCompany } from "@/store/companySilice";
 
 const OrderForm: React.FC = () => {
   const dispatch = useAppDispatch();
+  const company = useAppSelector(selectCompany);
+
   const [formData, setFormData] = useState({
     customerName: "",
     paymentMethod: "",
@@ -145,8 +149,18 @@ const OrderForm: React.FC = () => {
       description: "The order has been successfully added.",
     });
 
+    const generateOrderId = () => {
+      if (!company?.companyName) return Date.now().toString();
+
+      const nameParts = company.companyName.trim().split(" ");
+      const firstLetter = nameParts[0]?.charAt(0).toUpperCase() || "";
+      const secondLetter = nameParts[1]?.charAt(0).toUpperCase() || "";
+
+      return `${firstLetter}${secondLetter}${Date.now()}`;
+    };
+
     const newOrder = {
-      id: Date.now().toString(),
+      id: generateOrderId(),
       customerName: formData.customerName,
       phoneNumber: formData.phoneNumber,
       customerAddress: formData.customerAddress,
@@ -158,6 +172,7 @@ const OrderForm: React.FC = () => {
       amount,
     };
     // @ts-ignore
+
     dispatch(addOrder(newOrder));
 
     // Reset form
