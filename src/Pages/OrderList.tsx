@@ -38,7 +38,6 @@ import {
 import { Ellipsis, Edit, Trash, Save } from "lucide-react";
 import PDFDownloadButton from "./PDFDownloadButton";
 import BulkPrintOrders from "./Print/bulk-print-orders";
-import PrintOrder from "./Print/print-order";
 import { selectCompany } from "@/store/companySilice";
 
 const OrderList: React.FC = () => {
@@ -348,11 +347,6 @@ const OrderList: React.FC = () => {
                                         <Trash className="mr-2 h-4 w-4" />
                                         Delete
                                       </Button>
-                                      <PrintOrder
-                                        order={order}
-                                        //@ts-ignore
-                                        company={company}
-                                      />
                                     </div>
                                   </PopoverContent>
                                 </Popover>

@@ -1,41 +1,31 @@
 "use client";
 
 import type React from "react";
-
-import { useRef, useState } from "react";
-import { useReactToPrint } from "react-to-print";
-import { QRCodeSVG } from "qrcode.react";
-import { Printer, Eye } from "lucide-react";
+import { useState } from "react";
+import { Printer, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogClose,
-} from "@/components/ui/dialog";
+
 import type { Order, CompanyState } from "@/store/types/order";
 
-interface BulkPrintOrdersProps {
+interface StickerPrintProps {
   orders: Order[];
   company: CompanyState;
   sortBy?: keyof Order;
   sortDirection?: "asc" | "desc";
+  onPrintComplete?: () => void;
 }
 
-const BulkPrintOrders: React.FC<BulkPrintOrdersProps> = ({
+const StickerPrint: React.FC<StickerPrintProps> = ({
   orders,
   company,
   sortBy = "id",
   sortDirection = "desc",
+  onPrintComplete,
 }) => {
-  const printRef = useRef<HTMLDivElement>(null);
-  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [isPrinting, setIsPrinting] = useState(false);
   const { address, companyName, phoneNumber } = company;
 
-  // Sort orders based on provided criteria
   const sortedOrders = [...orders].sort((a, b) => {
     const aValue = a[sortBy];
     const bValue = b[sortBy];
@@ -53,265 +43,191 @@ const BulkPrintOrders: React.FC<BulkPrintOrdersProps> = ({
     return 0;
   });
 
-  const handlePrint = useReactToPrint({
-    // @ts-ignore
-    content: () => printRef.current,
-    documentTitle: "Orders-List",
-    pageStyle: `
-    @page {
-      size: 80mm auto;
-      margin: 0;
-    }
-    @media print {
-      body {
-        width: 80mm;
-        margin: 0;
-        padding: 0;
-      }
-      .page-break {
-        page-break-after: always;
-        height: 0;
-        display: block;
-      }
-    }
-  `,
-    onPrintError: (error) => {
-      console.error("Print failed:", error);
+  const handlePrint = async () => {
+    if (!orders || orders.length === 0) {
       toast({
-        title: "Printer Error",
-        description:
-          "Could not connect to printer. Please check your printer connection.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Add a function to check printer and handle printing
-  const handlePrintWithCheck = () => {
-    // Check if window.print is available (browser support)
-    if (typeof window.print !== "function") {
-      toast({
-        title: "Printing Not Supported",
-        description:
-          "Printing is not supported in this browser or environment.",
+        title: "Nothing to Print",
+        description: "There are no orders to print stickers for.",
         variant: "destructive",
       });
       return;
     }
 
-    // Attempt to print
-    handlePrint();
-  };
+    setIsPrinting(true);
 
-  // Calculate total amount of all orders
-  const totalAmount = orders.reduce((sum, order) => {
-    const amount =
-      typeof order.amount === "number"
-        ? order.amount
-        : Number.parseFloat((order.amount as number | string).toString()) || 0;
-    return sum + amount;
-  }, 0);
+    try {
+      const printWindow = window.open("", "_blank");
 
-  // Receipt content component that's used for both preview and printing
-  const ReceiptContent = () => (
-    <div style={{ width: "80mm", fontFamily: "monospace" }}>
-      {/* Summary Page */}
-      <div className="p-2">
-        <div className="text-center mb-2">
-          <div className="font-bold text-lg">{companyName}</div>
-          <div className="text-xs">{address}</div>
-          <div className="text-xs">{phoneNumber}</div>
-          <div className="text-xs mt-1">----- ORDERS SUMMARY -----</div>
-        </div>
+      if (!printWindow) {
+        throw new Error("Could not open print window.");
+      }
 
-        <div className="text-xs mb-2">
-          <div>Date: {new Date().toLocaleString()}</div>
-          <div>Total Orders: {orders.length}</div>
-        </div>
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Print Orders</title>
+            <style>
+              @page {
+               size: 80mm 50mm; 
+                margin: 0;
+              }
+              body {
+                margin: 0;
+                padding: 0;
+                font-family: Arial, sans-serif;
+                font-size: 10px;
+                background-color: white;
+              }
+              .sticker {
+                width: 80mm;
+              height: 50mm;
+                page-break-after: always;
+                position: relative;
+                box-sizing: border-box;
+                padding: 5mm;
+                display: flex;
+                flex-direction: column;
+              }
+              .sticker-header {
+                display: flex;
+                justify-content: space-between;
+                border-bottom: 1px solid #000;
+                padding-bottom: 2mm;
+                margin-bottom: 2mm;
+              }
+              .company-name {
+                font-weight: bold;
+                font-size: 12px;
+              }
+              .order-id {
+                font-weight: bold;
+              }
+              .customer-info {
+                margin-bottom: 2mm;
+              }
+              .product-info {
+                margin-bottom: 2mm;
+              }
+              .qr-code {
+                position: absolute;
+                right: 5mm;
+                top: 12mm;
+              }
+              .bold {
+                font-weight: bold;
+              }
+              .footer {
+                margin-top: auto;
+                border-top: 1px solid #000;
+                padding-top: 2mm;
+                font-size: 8px;
+                text-align: center;
+              }
+            </style>
+          </head>
+          <body>
+      `);
 
-        <div className="text-xs mb-2">
-          <div>---------------------------------------</div>
-          <div className="flex justify-between">
-            <span>Order ID</span>
-            <span>Customer</span>
-            <span>Amount</span>
-          </div>
-          <div>---------------------------------------</div>
+      sortedOrders.forEach((order) => {
+        const orderQRData = `ID: ${order.id}, 
+        Customer: ${order.customerName}, 
+        Phone: ${order.phoneNumber}, 
+        Product: ${order.productName},
+       Amount: ${order.amount}`;
 
-          {sortedOrders.map((order) => (
-            <div key={order.id} className="flex justify-between">
-              <span className="w-16 truncate">{order.id.slice(-6)}</span>
-              <span className="w-20 truncate">{order.customerName}</span>
-              <span>
-                Rs{" "}
-                {typeof order.amount === "number"
+        printWindow.document.write(`
+          <div class="sticker">
+            <div class="sticker-header">
+              <div class="company-name">${companyName}</div>
+              <div class="order-id">ID: ${order.id}</div>
+            </div>
+            <div class="customer-info">
+              <div class="bold">Customer Details:</div>
+              <div>${order.customerName}</div>
+              <div>${order.customerAddress}</div>
+              <div>Phone: ${order.phoneNumber}</div>
+            </div>
+            <div class="product-info">
+              <div><span class="bold">Product:</span> ${order.productName}</div>
+              <div><span class="bold">Qty:</span> ${
+                order.quantity
+              } | <span class="bold">Color:</span> ${order.productColor}</div>
+              <div><span class="bold">Amount:</span> Rs ${
+                typeof order.amount === "number"
                   ? order.amount.toFixed(2)
-                  : order.amount}
-              </span>
+                  : order.amount
+              }</div>
+              <div><span class="bold">Payment Method:</span> <span class="bold">${
+                order.paymentMethod
+              }</div>
             </div>
-          ))}
-
-          <div>---------------------------------------</div>
-          <div className="flex justify-between font-bold">
-            <span>TOTAL</span>
-            <span>Rs {totalAmount.toFixed(2)}</span>
-          </div>
-        </div>
-
-        <div className="text-center text-xs mb-2">
-          <div>--- Individual order details follow ---</div>
-        </div>
-      </div>
-
-      <div className="page-break"></div>
-
-      {/* Individual Order Pages */}
-      {sortedOrders.map((order, index) => {
-        // Generate order data for QR code
-        const orderQRData = JSON.stringify({
-          id: order.id,
-          customer: order.customerName,
-          phone: order.phoneNumber,
-          product: order.productName,
-          amount: order.amount,
-        });
-
-        return (
-          <div key={order.id}>
-            <div className="p-2">
-              {/* Header */}
-              <div className="text-center mb-2">
-                <div className="font-bold text-lg">{companyName}</div>
-                <div className="text-xs">{address}</div>
-                <div className="text-xs">{phoneNumber}</div>
-                <div className="text-xs mt-1">----- ORDER RECEIPT -----</div>
-              </div>
-
-              {/* Order Info */}
-              <div className="text-xs mb-2">
-                <div>Order ID: {order.id}</div>
-                <div>Date: {new Date().toLocaleString()}</div>
-              </div>
-
-              {/* Customer Info */}
-              <div className="text-xs mb-2">
-                <div>Customer: {order.customerName}</div>
-                <div>Address: {order.customerAddress}</div>
-                <div>Phone: {order.phoneNumber}</div>
-              </div>
-
-              {/* Order Items */}
-              <div className="text-xs mb-2">
-                <div>---------------------------------------</div>
-                <div className="flex justify-between">
-                  <span>Item</span>
-                  <span>Qty</span>
-                  <span>Price</span>
-                  <span>Total</span>
-                </div>
-                <div>---------------------------------------</div>
-                <div className="flex justify-between">
-                  <span className="w-20 truncate">{order.productName}</span>
-                  <span>{order.quantity}</span>
-                  <span>
-                    Rs{" "}
-                    {typeof order.price === "number"
-                      ? order.price.toFixed(2)
-                      : order.price}
-                  </span>
-                  <span>
-                    Rs{" "}
-                    {typeof order.amount === "number"
-                      ? order.amount.toFixed(2)
-                      : order.amount}
-                  </span>
-                </div>
-                <div className="mt-1">Color: {order.productColor}</div>
-                <div>---------------------------------------</div>
-              </div>
-
-              {/* Total */}
-              <div className="text-xs mb-2">
-                <div className="flex justify-between font-bold">
-                  <span>TOTAL</span>
-                  <span>
-                    Rs{" "}
-                    {typeof order.amount === "number"
-                      ? order.amount.toFixed(2)
-                      : order.amount}
-                  </span>
-                </div>
-                <div>Payment Method: {order.paymentMethod}</div>
-              </div>
-
-              {/* QR Code */}
-              <div className="flex justify-center mb-2">
-                <QRCodeSVG value={orderQRData} size={120} />
-              </div>
-
-              {/* Footer */}
-              <div className="text-center text-xs mb-2">
-                <div>Thank you for your purchase!</div>
-                <div>Please scan QR code for order details</div>
-              </div>
+            <div class="qr-code">
+              <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent(
+                orderQRData
+              )}" width="80" height="80" alt="QR Code" />
             </div>
-
-            {index < sortedOrders.length - 1 && (
-              <div className="page-break"></div>
-            )}
+            <div class="footer">
+              <div>Date: ${new Date().toLocaleDateString()}</div>
+              <div>${companyName} | ${phoneNumber}</div>
+              <span>${address}</span>
+            </div>
           </div>
-        );
-      })}
-    </div>
-  );
+        `);
+      });
+
+      printWindow.document.write(`
+          </body>
+        </html>
+      `);
+
+      printWindow.document.close();
+
+      printWindow.onload = () => {
+        printWindow.focus();
+        printWindow.print();
+
+        setTimeout(() => {
+          if (!printWindow.closed) {
+            printWindow.close();
+          }
+        }, 1000);
+      };
+
+      if (onPrintComplete) {
+        onPrintComplete();
+      }
+    } catch (error) {
+      toast({
+        title: "Print Error",
+        description:
+          error instanceof Error
+            ? error.message
+            : "An error occurred while printing.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsPrinting(false);
+    }
+  };
 
   return (
     <>
-      {/* Preview Button */}
-      <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
-        <DialogTrigger asChild>
-          <Button variant="outline" size="icon">
-            <Eye className="h-4 w-4" />
-          </Button>
-        </DialogTrigger>
-        <DialogContent className="max-w-[400px] p-0 max-h-[80vh] flex flex-col">
-          <DialogHeader className="p-4 pb-0">
-            <DialogTitle>Bulk Receipt Preview</DialogTitle>
-          </DialogHeader>
-
-          {/* Scrollable content */}
-          <div className="p-4 bg-white flex  justify-center overflow-y-auto border-t">
-            <ReceiptContent />
-          </div>
-
-          <div className="p-4 flex justify-end space-x-2 border-t">
-            <DialogClose asChild>
-              <Button variant="outline" size="sm">
-                Close
-              </Button>
-            </DialogClose>
-            <Button onClick={handlePrintWithCheck} size="sm">
-              <Printer className="mr-2 h-4 w-4" />
-              Print
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Print Button */}
-      <Button onClick={handlePrintWithCheck} variant="outline" size="sm">
-        <Printer className="mr-2 h-4 w-4" />
-        Print
+      <Button
+        onClick={handlePrint}
+        variant="outline"
+        size="sm"
+        disabled={!orders || orders.length === 0 || isPrinting}
+      >
+        {isPrinting ? (
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        ) : (
+          <Printer className="mr-2 h-4 w-4" />
+        )}
+        Print {orders.length > 0 ? `(${orders.length})` : ""}
       </Button>
-
-      {/* Hidden print template */}
-      <div className="hidden">
-        <div ref={printRef}>
-          <ReceiptContent />
-        </div>
-      </div>
     </>
   );
 };
 
-export default BulkPrintOrders;
+export default StickerPrint;
