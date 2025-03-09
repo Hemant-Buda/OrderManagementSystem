@@ -21,10 +21,10 @@ const AlertDialog: React.FC<AlertDialogProps> = ({
   open,
   onClose,
   onConfirm,
-  title = "Confirm Action",
-  description = "Are you sure you want to log out? All your order data will be cleared.",
-  confirmText = "Confirm",
-  cancelText = "Cancel",
+  title,
+  description,
+  confirmText,
+  cancelText,
 }) => {
   return (
     <Dialog open={open} onOpenChange={onClose}>

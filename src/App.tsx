@@ -42,7 +42,7 @@ const AppContent: React.FC = () => {
     setIsDialogOpen(false);
     toast({
       title: "Logout Successful",
-      description: "Now you can register another company",
+      description: " Register your company",
     });
   };
 
