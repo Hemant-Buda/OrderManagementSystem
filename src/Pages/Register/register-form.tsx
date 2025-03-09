@@ -99,7 +99,9 @@ export default function RegisterForm() {
     <ToastProvider>
       <Card className="w-full">
         <CardHeader>
-          <CardTitle>Register Your Company</CardTitle>
+          <CardTitle className="text-slate-700 dark:text-primary">
+            Register Your Company
+          </CardTitle>
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
