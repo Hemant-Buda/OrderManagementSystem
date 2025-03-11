@@ -23,7 +23,6 @@ const StickerPrint: React.FC<StickerPrintProps> = ({
   sortDirection = "desc",
   onPrintComplete,
 }) => {
-  console.log(orders,"jabjkabf");
   const [isPrinting, setIsPrinting] = useState(false);
   const { address, companyName, phoneNumber } = company;
 
