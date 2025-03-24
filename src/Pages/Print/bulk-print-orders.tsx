@@ -76,23 +76,24 @@ const StickerPrint: React.FC<StickerPrintProps> = ({
                 margin: 0;
                 padding: 0;
                 font-family: Arial, sans-serif;
-                font-size: 10px;
+                font-size: 8px;
                 background-color: white;
               }
               .sticker {
                 width: 80mm;
-              height: 50mm;
+                height: 50mm;
                 page-break-after: always;
                 position: relative;
                 box-sizing: border-box;
                 padding: 5mm;
                 display: flex;
                 flex-direction: column;
+                border: 0.1px solid grey;
               }
               .sticker-header {
                 display: flex;
                 justify-content: space-between;
-                border-bottom: 1px solid #000;
+                border-bottom: 0.1px solid grey;
                 padding-bottom: 2mm;
                 margin-bottom: 2mm;
               }
@@ -119,8 +120,8 @@ const StickerPrint: React.FC<StickerPrintProps> = ({
               }
               .footer {
                 margin-top: auto;
-                border-top: 1px solid #000;
-                padding-top: 2mm;
+                border-top: 0.1px solid grey;
+                padding-top: 1mm;
                 font-size: 8px;
                 text-align: center;
               }
